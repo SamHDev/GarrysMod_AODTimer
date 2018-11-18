@@ -1,0 +1,220 @@
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Cutive+Mono|IBM+Plex+Mono:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i|Overpass+Mono:300,400,600,700|Space+Mono:400,400i,700,700i" rel="stylesheet">
+        <style>
+            body {
+                margin: 0;
+            }
+            .main {
+                background-color: #0099cc;
+                color: white;
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                
+            }
+            .hoursText {
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 32px;
+                color: white;
+                margin: 0 auto;
+            }
+            
+            .tbl_hours {
+                padding-right: 50px;
+                font-weight: 500;
+            }
+            .stats {
+                width: 100%;
+                text-align: center;
+                position: absolute;
+                bottom: 30;
+            }
+            
+            .record {
+                padding-top: 50px;
+            }
+            
+            .recordButton {
+                background-color: white;
+                color: #0099cc;
+                padding: 20px;
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 56px;
+                margin-top: 30px;
+            }
+            
+            .recordButton:hover {
+                background-color: #ddd;
+            }
+            
+            .statusText {
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 32px;
+            }
+            .statusText2 {
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 32px;
+            }
+            .cred {
+                width: 100%;
+                text-align: center;
+                position: absolute;
+                bottom: 10;
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="main">
+            <div class="record">
+                <a id="rec" class="recordButton" onclick="btnPress();">Start AOD</a><br><br><br>
+                <a id="status" class="statusText" style="color:white;">Not Recording</a><br><br>
+                <a id="thisLast" class="statusText2">This</a><a id="thisLast" class="statusText2"> Session: </a><a id="sesh_time" class="statusText2">00:00:00</a>
+            </div>
+            <div class="stats">
+                <hr>
+                <table class="hoursText">
+                    <tr><td id="hours_today" class="tbl_hours">00:00</td><td> AOD hours today</td></tr>
+                    <tr><td id="hours_week" class="tbl_hours">00:00</td><td> AOD hours this week</td></tr>
+                    <tr><td id="hours_lweek" class="tbl_hours">00:00</td><td> AOD hours last week</td></tr>
+                    <tr><td id="hours_all" class="tbl_hours">00:00</td><td> AOD hours total</td></tr>
+                </table>
+                <hr>
+            </div>
+            <div class="cred">
+                Made by <a href="https://github.com/SamHDev">SamHDev</a> (AKA Sqeaker Luis Fonsi)
+            </div>
+            <script>
+                if (localStorage.aod == null) {
+                    localStorage.setItem("aod",JSON.stringify([]))
+                }
+                
+                var isAod = false;
+                var aodStart = 0;
+                var aodEnd = 0;
+                var timer = 0;
+                
+                
+                function updateStats(){
+                    var data = JSON.parse(localStorage.getItem("aod"))
+                    console.log(data);
+                    todayCount = 0;
+                    weekCount = 0;
+                    lweekCount = 0;
+                    allCount = 0;
+                    
+                    now = new Date();
+                    today = new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0)
+                    week = new Date(today-(604800000))
+                    lweek = new Date(week-(604800000))
+                    
+                    
+                    for (key in data){
+                        val = data[key];
+                        console.log(val)
+                        allCount = allCount + val.times;
+                        dt = new Date(val.end);
+                        
+                        if (dt > today) {
+                            todayCount = todayCount + val.times;
+                            console.log("TODAY")
+                        }
+                        if (dt > weekCount) {
+                            weekCount = weekCount + val.times;
+                        } else {
+                            if (dt > lweekCount) {
+                            lweekCount = lweekCount + val.times;
+                            }
+                        }
+                    }
+                    
+                    document.getElementById("hours_today").innerHTML = formatHM(HMS(todayCount))
+                    document.getElementById("hours_week").innerHTML = formatHM(HMS(weekCount))
+                    document.getElementById("hours_lweek").innerHTML = formatHM(HMS(lweekCount))
+                    document.getElementById("hours_all").innerHTML = formatHM(HMS(allCount))
+                }
+                
+                function startRecord() {
+                    if (isAod == true) {
+                        alert("Already Recording AOD");
+                    } else {
+                        isAod = true;
+                        aodStart = new Date();
+                        aodEnd = 0;
+                        document.getElementById("rec").innerHTML = "Stop AOD"
+                        document.getElementById("status").innerHTML = "Recording AOD";
+                        document.getElementById("status").style.color = "red";
+                    }
+                }
+                function stopRecord() {
+                    if (isAod == false) {
+                        alert("Not Recording AOD");
+                    } else {
+                        isAod = false;
+                        aodEnd = new Date();
+                        time = aodEnd - aodStart;
+                        console.log(time);
+                        times = parseInt(time/1000);
+                        console.log(times)
+                        timer = times;
+                        document.getElementById("rec").innerHTML = "Start AOD"
+                        document.getElementById("status").innerHTML = "Not Recording";
+                        document.getElementById("status").style.color = "white";
+                        var data = JSON.parse(localStorage.getItem("aod"));
+                        arr = {"start":aodStart,"end":aodEnd,"time":time,"times":times};
+                        data.push(arr);
+                        localStorage.setItem("aod",JSON.stringify(data))
+                    }
+                }
+                function btnPress() {
+                    if (isAod == false){
+                        startRecord();
+                    } else {
+                        stopRecord();
+                    }
+                }
+                
+                function HMS(totalSeconds){
+                    hours = Math.floor(totalSeconds / 3600);
+                    totalSeconds %= 3600;
+                    minutes = Math.floor(totalSeconds / 60);
+                    seconds = totalSeconds % 60;
+                    return [hours,minutes,seconds]
+                }
+                function padInt(ins,lenv){
+                    strv = ins.toString();
+                    return ('0000000000' + strv).slice(lenv*-1)
+                }
+                function formatHMS(tup){
+                    return padInt(tup[0],2) + ":" + padInt(tup[1],2) + ":" + padInt(tup[2],2)
+                }
+                 function formatHM(tup){
+                    return padInt(tup[0],2) + ":" + padInt(tup[1],2)
+                }
+                function updateTimer() {
+                    if (isAod == true){
+                        
+                        document.getElementById("thisLast").innerHTML= "This"
+                        
+                        timeDif = parseInt(((new Date()) - (aodStart))/1000);
+                        form = formatHMS(HMS(timeDif))
+                        document.getElementById("sesh_time").innerHTML = form;
+                    } else {
+                        
+                        document.getElementById("thisLast").innerHTML= "Recorded"
+                        
+                        timeDif = parseInt(((aodEnd) - (aodStart))/1000);
+                        form = formatHMS(HMS(timeDif))
+                        document.getElementById("sesh_time").innerHTML = form;
+                    }
+                }
+                updateStats();
+                updateTimer();
+                setInterval(updateTimer,50)
+                setInterval(updateStats,30000)
+            </script>
+    </body>
+</html>
